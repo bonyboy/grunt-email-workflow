@@ -140,38 +140,7 @@ module.exports = function(grunt) {
             }]
           }
         },
-        tinypng: {
-            options: {
-                apiKey: "T6RVxl_xo1aeuwi0w9IGFTa-bCfaqF4i",
-                checkSigs: true,
-                sigFile: 'dest/file_sigs.json',
-                summarize: true,
-                showProgress: true,
-                stopOnImageError: true
-            },
-            compress: {
-                files: {
-                  '<%= paths.dist_img %>': '**/*.{png,jpg,gif}'
-                }
-            },
-            compress2: {
-                expand: true, 
-                src: 'src/{foo,bar,baz}.png', 
-                dest: 'dest/',
-                ext: '.min.png'
-            },
-            compress3: {
-                src: ['{foo,bar,baz}.png', '!*.min.png'],
-                cwd: 'src/',
-                dest: 'dest/',
-                expand: true,
-                rename: function(dest, src) { 
-                    var parts = src.split('/'),
-                    fname = path.basename(parts.pop(), ".png");
-                    return path.join(dest, fname + '.min.png');
-                }
-            }
-          },
+
 
 
 
@@ -220,8 +189,34 @@ module.exports = function(grunt) {
 
 
 
+        // Use Rackspace Cloud Files if you're using images in your email
+        // grunt cdnify
+        cloudfiles: {
+          prod: {
+            'user': '<%= secrets.cloudfiles.user %>', // See README for secrets.json or replace this with your user
+            'key': '<%= secrets.cloudfiles.key %>', // See README for secrets.json or replace this with your own key
+            'region': '<%= secrets.cloudfiles.region %>', // See README for secrets.json or replace this with your region
+            'upload': [{
+              'container': '<%= secrets.cloudfiles.container %>', // See README for secrets.json or replace this with your container name
+              'src': '<%= paths.dist_img %>/*',
+              'dest': '/',
+              'stripcomponents': 0
+            }]
+          }
+        },
+
         // CDN will replace local paths with your CDN path
         cdn: {
+          cloudfiles: {
+            options: {
+              cdn: '<%= secrets.cloudfiles.uri %>', // See README for secrets.json or replace this with your cdn uri
+              flatten: true,
+              supportedTypes: 'html'
+            },
+            cwd: './<%= paths.dist %>',
+            dest: './<%= paths.dist %>',
+            src: ['*.html']
+          },
           aws_s3: {
             options: {
               cdn: '<%= secrets.s3.bucketuri %>/<%= secrets.s3.bucketname %>/<%= secrets.s3.bucketdir %>', // See README for secrets.json or replace this with your Amazon S3 bucket uri
@@ -331,9 +326,6 @@ module.exports = function(grunt) {
 
     // Load assemble
     grunt.loadNpmTasks('assemble');
-
-    // Load TinyPNG
-    grunt.loadNpmTasks('grunt-tinypng');
 
     // Load all Grunt tasks
     // https://github.com/sindresorhus/load-grunt-tasks
